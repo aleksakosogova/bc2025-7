@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #999;
+            width: 400px;
+            background: #f7f7f7;
+        }
+        img {
+            margin-top: 10px;
+            max-width: 200px;
+            display: block;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Inventory Search</h2>
+
+<form id="searchForm">
+    <label>ID:</label><br>
+    <input type="number" name="id" id="id" required><br><br>
+
+    <label>
+        <input type="checkbox" name="has_photo" id="has_photo">
+        Include photo in description
+    </label>
+    <br><br>
+
+    <button type="submit">Search</button>
+</form>
+
+<div id="output"></div>
+
+<script>
+document.getElementById("searchForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById("id").value;
+    const hasPhoto = document.getElementById("has_photo").checked ? "on" : "off";
+
+    const formData = new URLSearchParams();
+    formData.append("id", id);
+    formData.append("has_photo", hasPhoto);
+
+    const output = document.getElementById("output");
+    output.innerHTML = ""; // очистити вивід
+
+    try {
+        const response = await fetch("/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            output.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+            return;
+        }
+
+        // ---- ВИВІД РЕЗУЛЬТАТУ ----
+        let html = `
+            <div class="result-box">
+                <b>ID:</b> ${data.id}<br>
+                <b>Name:</b> ${data.name}<br>
+                <b>Description:</b><br>
+                <pre>${data.description || "(empty)"}</pre>
+        `;
+
+        if (data.photoUrl) {
+            html += `<img src="${data.photoUrl}" alt="photo">`;
+        }
+
+        html += `</div>`;
+        output.innerHTML = html;
+
+    } catch (err) {
+        output.innerHTML = `<p class="error">Error: invalid server response</p>`;
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: inventory_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  app:
+    build: .
+    container_name: inventory_app
+    restart: always
+    ports:
+      - "${APP_PORT}:3000"
+      - "9229:9229" # <--- ДОДАНО ДЛЯ CHROME INSPECTOR
+    volumes:
+      - .:/app
+      - /app/node_modules # <--- ВИПРАВЛЕННЯ MULTER/NODEMON
+      - ./cache:/app/cache
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      APP_HOST: ${APP_HOST}
+      APP_PORT: 3000
+    command: npx nodemon --inspect=0.0.0.0:9229 --ignore node_modules index.js --host 0.0.0.0 --port 3000 --cache ./cache # <--- ВИПРАВЛЕННЯ
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

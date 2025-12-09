@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+  <h2>Inventory Registration</h2>
+
+  <form id="register-form" method="post" action="/register" enctype="multipart/form-data">
+    <label>Name:</label><br>
+    <input type="text" id="inventory_name" name="inventory_name"><br><br>
+
+    <label>Description:</label><br>
+    <textarea id="description" name="description" rows="4" cols="50"></textarea><br><br>
+
+    <label>Photo:</label><br>
+    <input type="file" id="photo" name="photo"><br><br>
+
+    <button type="submit">Register</button>
+  </form>
+
+  <div id="photo-preview" style="margin-top:20px;"></div>
+
+  <script>
+    document.getElementById("register-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+
+      const response = await fetch("/register", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.item && data.item.photo) {
+        document.getElementById("photo-preview").innerHTML =
+          `<h3>Uploaded photo:</h3>
+           <img src="/inventory/${data.item.id}/photo" width="200">`;
+      }
+    });
+  </script>
+
+</body>
+</html>
